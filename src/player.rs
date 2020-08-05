@@ -1,10 +1,9 @@
-use rltk::{console, Point, Rltk, VirtualKeyCode};
+use rltk::{Point, Rltk, VirtualKeyCode};
 use specs::prelude::*;
 use std::cmp::{max, min};
 
 use super::{
-    CombatStats, GameLog, Item, Map, Player, Position, RunState, State, TileType, Viewshed,
-    WantsToMelee,
+    CombatStats, GameLog, Item, Map, Player, Position, RunState, State, Viewshed, WantsToMelee,
 };
 use crate::WantsToPickupItem;
 
@@ -40,13 +39,7 @@ pub fn try_move_player(delta_x: i32, delta_y: i32, ecs: &mut World) {
                         },
                     )
                     .expect("Add target failed");
-            }
-            match target {
-                None => {}
-                Some(t) => {
-                    console::log(&format!("From Hell's Heart, I stab thee!"));
-                    return; // Don't move after attacking
-                }
+                return;
             }
         }
         if !map.blocked[destination_idx] {

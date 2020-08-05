@@ -3,6 +3,9 @@ use specs::prelude::*;
 
 mod components;
 pub use components::*;
+mod gamelog;
+pub use gamelog::GameLog;
+mod gui;
 mod map;
 pub use map::*;
 mod damage_system;
@@ -92,12 +95,14 @@ impl GameState for State {
                 ctx.set(pos.x, pos.y, render.fg, render.bg, render.glyph)
             }
         }
+        gui::draw_ui(&self.ecs, ctx);
     }
 }
 
 fn main() {
     use rltk::RltkBuilder;
-    let context = RltkBuilder::simple80x50().with_title("doghack").build();
+    let mut context = RltkBuilder::simple80x50().with_title("doghack").build();
+    context.with_post_scanlines(true);
     let mut gs = State { ecs: World::new() };
     gs.ecs.register::<BlocksTile>();
     gs.ecs.register::<CombatStats>();
@@ -190,6 +195,9 @@ fn main() {
     gs.ecs.insert(map);
     gs.ecs.insert(Point::new(player_x, player_y));
     gs.ecs.insert(RunState::PreRun);
+    gs.ecs.insert(gamelog::GameLog {
+        entries: vec!["Welcome to doghack".to_string()],
+    });
 
     rltk::main_loop(context, gs);
 }

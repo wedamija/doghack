@@ -192,8 +192,10 @@ fn main() {
     let mut context = RltkBuilder::simple80x50().with_title("doghack").build();
     context.with_post_scanlines(true);
     let mut gs = State { ecs: World::new() };
+    gs.ecs.register::<AreaOfEffect>();
     gs.ecs.register::<BlocksTile>();
     gs.ecs.register::<CombatStats>();
+    gs.ecs.register::<Confusion>();
     gs.ecs.register::<Consumable>();
     gs.ecs.register::<ProvidesHealing>();
     gs.ecs.register::<InBackpack>();

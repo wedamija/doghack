@@ -189,7 +189,10 @@ impl GameState for State {
 
 fn main() {
     use rltk::RltkBuilder;
-    let mut context = RltkBuilder::simple80x50().with_title("doghack").build();
+    let mut context = RltkBuilder::simple80x50()
+        .with_title("doghack")
+        .build()
+        .unwrap();
     context.with_post_scanlines(true);
     let mut gs = State { ecs: World::new() };
     gs.ecs.register::<AreaOfEffect>();

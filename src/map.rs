@@ -1,5 +1,6 @@
 use super::rect::Rect;
 use rltk::{Algorithm2D, BaseMap, Console, Point, RandomNumberGenerator, Rltk, RGB};
+use smallvec::SmallVec;
 use specs::prelude::*;
 use std::cmp::{max, min};
 
@@ -29,8 +30,8 @@ impl BaseMap for Map {
         self.tiles[idx as usize] == TileType::Wall
     }
 
-    fn get_available_exits(&self, idx: usize) -> Vec<(usize, f32)> {
-        let mut exits: Vec<(usize, f32)> = Vec::new();
+    fn get_available_exits(&self, idx: usize) -> SmallVec<[(usize, f32); 10]> {
+        let mut exits = SmallVec::new();
         let x = idx as i32 % self.width;
         let y = idx as i32 / self.width;
         let w = self.width as usize;

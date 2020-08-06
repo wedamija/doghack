@@ -167,6 +167,7 @@ pub fn player_input(gs: &mut State, ctx: &mut Rltk) -> RunState {
             // Inventory
             VirtualKeyCode::I => return RunState::ShowInventory,
             VirtualKeyCode::D => return RunState::ShowDropItem,
+            VirtualKeyCode::R => return RunState::ShowRemoveItem,
 
             // Stairs
             VirtualKeyCode::Period => {

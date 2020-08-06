@@ -47,6 +47,7 @@ pub enum RunState {
     },
     SaveGame,
     NextLevel,
+    ShowRemoveItem,
 }
 
 pub struct State {
@@ -71,6 +72,8 @@ impl State {
         items.run_now(&self.ecs);
         let mut drop_items = inventory_system::ItemDropSystem {};
         drop_items.run_now(&self.ecs);
+        let mut item_remove = inventory_system::ItemRemoveSystem {};
+        item_remove.run_now(&self.ecs);
         self.ecs.maintain();
     }
 
@@ -78,6 +81,7 @@ impl State {
         let entities = self.ecs.entities();
         let player = self.ecs.read_storage::<Player>();
         let backpack = self.ecs.read_storage::<InBackpack>();
+        let equipped = self.ecs.read_storage::<Equipped>();
         let player_entity = self.ecs.fetch::<Entity>();
 
         let mut to_delete: Vec<Entity> = Vec::new();
@@ -94,6 +98,13 @@ impl State {
             let bp = backpack.get(entity);
             if let Some(bp) = bp {
                 if bp.owner == *player_entity {
+                    should_delete = false;
+                }
+            }
+
+            let eq = equipped.get(entity);
+            if let Some(eq) = eq {
+                if eq.owner == *player_entity {
                     should_delete = false;
                 }
             }
@@ -313,6 +324,24 @@ impl GameState for State {
                 self.goto_next_level();
                 newrunstate = RunState::PreRun;
             }
+            RunState::ShowRemoveItem => {
+                let result = gui::remove_item_menu(self, ctx);
+                match result.0 {
+                    gui::ItemMenuResult::Cancel => newrunstate = RunState::AwaitingInput,
+                    gui::ItemMenuResult::NoResponse => {}
+                    gui::ItemMenuResult::Selected => {
+                        let item_entity = result.1.unwrap();
+                        let mut intent = self.ecs.write_storage::<WantsToRemoveItem>();
+                        intent
+                            .insert(
+                                *self.ecs.fetch::<Entity>(),
+                                WantsToRemoveItem { item: item_entity },
+                            )
+                            .expect("Unable to insert intent");
+                        newrunstate = RunState::PlayerTurn;
+                    }
+                }
+            }
         }
 
         {
@@ -336,14 +365,18 @@ fn main() {
     gs.ecs.register::<CombatStats>();
     gs.ecs.register::<Confusion>();
     gs.ecs.register::<Consumable>();
-    gs.ecs.register::<ProvidesHealing>();
+    gs.ecs.register::<DefenseBonus>();
+    gs.ecs.register::<Equipped>();
+    gs.ecs.register::<Equippable>();
     gs.ecs.register::<InBackpack>();
     gs.ecs.register::<InflictsDamage>();
     gs.ecs.register::<Item>();
+    gs.ecs.register::<MeleePowerBonus>();
     gs.ecs.register::<Monster>();
     gs.ecs.register::<Name>();
     gs.ecs.register::<Player>();
     gs.ecs.register::<Position>();
+    gs.ecs.register::<ProvidesHealing>();
     gs.ecs.register::<Ranged>();
     gs.ecs.register::<Renderable>();
     gs.ecs.register::<SerializationHelper>();
@@ -354,6 +387,7 @@ fn main() {
     gs.ecs.register::<WantsToPickupItem>();
     gs.ecs.register::<WantsToDropItem>();
     gs.ecs.register::<WantsToUseItem>();
+    gs.ecs.register::<WantsToRemoveItem>();
 
     gs.ecs.insert(SimpleMarkerAllocator::<SerializeMe>::new());
 

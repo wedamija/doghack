@@ -52,7 +52,7 @@ pub enum RunState {
 }
 
 pub struct State {
-    ecs: World,
+    pub ecs: World,
 }
 
 impl State {
@@ -69,8 +69,8 @@ impl State {
         damage.run_now(&self.ecs);
         let mut item_collection = inventory_system::ItemCollectionSystem {};
         item_collection.run_now(&self.ecs);
-        let mut items = inventory_system::ItemUseSystem {};
-        items.run_now(&self.ecs);
+        let mut itemuse = inventory_system::ItemUseSystem {};
+        itemuse.run_now(&self.ecs);
         let mut drop_items = inventory_system::ItemDropSystem {};
         drop_items.run_now(&self.ecs);
         let mut item_remove = inventory_system::ItemRemoveSystem {};
@@ -130,8 +130,7 @@ impl State {
         let worldmap;
         {
             let mut worldmap_resource = self.ecs.write_resource::<Map>();
-            let current_depth = worldmap_resource.depth;
-            *worldmap_resource = Map::new_map_rooms_and_corridors(current_depth + 1);
+            *worldmap_resource = Map::new_map_rooms_and_corridors(worldmap_resource.depth + 1);
             worldmap = worldmap_resource.clone();
         }
 
@@ -229,6 +228,7 @@ impl GameState for State {
 
         match newrunstate {
             RunState::MainMenu { .. } => {}
+            RunState::GameOver { .. } => {}
             _ => {
                 draw_map(&self.ecs, ctx);
 
@@ -410,12 +410,9 @@ impl GameState for State {
     }
 }
 
-fn main() {
+fn main() -> rltk::BError {
     use rltk::RltkBuilder;
-    let mut context = RltkBuilder::simple80x50()
-        .with_title("doghack")
-        .build()
-        .unwrap();
+    let mut context = RltkBuilder::simple80x50().with_title("doghack").build()?;
     context.with_post_scanlines(true);
     let mut gs = State { ecs: World::new() };
     gs.ecs.register::<AreaOfEffect>();
@@ -455,18 +452,19 @@ fn main() {
     let (player_x, player_y) = map.rooms[0].center();
     // Add player
     let player_entity = spawner::player(&mut gs.ecs, player_x, player_y);
-    gs.ecs.insert(player_entity);
 
-    // Add monsters
     for room in map.rooms.iter().skip(1) {
         spawner::spawn_room(&mut gs.ecs, room, map.depth);
     }
     gs.ecs.insert(map);
     gs.ecs.insert(Point::new(player_x, player_y));
-    gs.ecs.insert(RunState::PreRun);
+    gs.ecs.insert(player_entity);
+    gs.ecs.insert(RunState::MainMenu {
+        menu_selection: gui::MainMenuSelection::NewGame,
+    });
     gs.ecs.insert(gamelog::GameLog {
-        entries: vec!["Welcome to doghack".to_string()],
+        entries: vec!["Welcome to Rusty Roguelike".to_string()],
     });
 
-    rltk::main_loop(context, gs);
+    rltk::main_loop(context, gs)
 }

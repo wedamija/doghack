@@ -1,8 +1,8 @@
 use super::{
-    CombatStats, Equipped, GameLog, InBackpack, Map, Name, Player, Point, Position, RunState,
-    State, Viewshed,
+    CombatStats, Equipped, GameLog, InBackpack, Map, Name, Player, Position, RunState, State,
+    Viewshed,
 };
-use rltk::{Rltk, VirtualKeyCode, RGB};
+use rltk::{Point, Rltk, VirtualKeyCode, RGB};
 use specs::prelude::*;
 
 #[derive(PartialEq, Copy, Clone)]
@@ -71,7 +71,7 @@ pub fn draw_ui(ecs: &World, ctx: &mut Rltk) {
         if y < 49 {
             ctx.print(2, y, s);
         }
-        y += 1
+        y += 1;
     }
     let mouse_pos = ctx.mouse_pos();
     ctx.set_bg(mouse_pos.0, mouse_pos.1, RGB::named(rltk::MAGENTA));
@@ -89,7 +89,8 @@ fn draw_tooltips(ecs: &World, ctx: &mut Rltk) {
     }
     let mut tooltip: Vec<String> = Vec::new();
     for (name, position) in (&names, &positions).join() {
-        if position.x == mouse_pos.0 && position.y == mouse_pos.1 {
+        let idx = map.xy_idx(position.x, position.y);
+        if position.x == mouse_pos.0 && position.y == mouse_pos.1 && map.visible_tiles[idx] {
             tooltip.push(name.name.to_string());
         }
     }
@@ -118,7 +119,7 @@ fn draw_tooltips(ecs: &World, ctx: &mut Rltk) {
                 for i in 0..padding {
                     ctx.print_color(
                         arrow_pos.x - i,
-                        arrow_pos.y,
+                        y,
                         RGB::named(rltk::WHITE),
                         RGB::named(rltk::GREY),
                         &" ".to_string(),
@@ -219,7 +220,7 @@ pub fn show_inventory(gs: &mut State, ctx: &mut Rltk) -> (ItemMenuResult, Option
             y,
             RGB::named(rltk::YELLOW),
             RGB::named(rltk::BLACK),
-            97 + j as u8,
+            97 + j as rltk::FontCharType,
         );
         ctx.set(
             19,
@@ -306,7 +307,7 @@ pub fn drop_item_menu(gs: &mut State, ctx: &mut Rltk) -> (ItemMenuResult, Option
             y,
             RGB::named(rltk::YELLOW),
             RGB::named(rltk::BLACK),
-            97 + j as u8,
+            97 + j as rltk::FontCharType,
         );
         ctx.set(
             19,
@@ -571,7 +572,7 @@ pub fn remove_item_menu(gs: &mut State, ctx: &mut Rltk) -> (ItemMenuResult, Opti
             y,
             RGB::named(rltk::YELLOW),
             RGB::named(rltk::BLACK),
-            97 + j as u8,
+            97 + j as rltk::FontCharType,
         );
         ctx.set(
             19,

@@ -55,7 +55,7 @@ fn room_table(map_depth: i32) -> RandomTable {
         .add("Dagger", 3)
         .add("Longsword", map_depth - 1)
         .add("Shield", 3)
-        .add("Shield", map_depth - 1)
+        .add("Tower Shield", map_depth - 1)
 }
 
 #[allow(clippy::map_entry)]
@@ -105,19 +105,6 @@ pub fn spawn_room(ecs: &mut World, room: &Rect, map_depth: i32) {
     }
 }
 
-/// Spawns a random monster at a given location
-pub fn random_monster(ecs: &mut World, x: i32, y: i32) {
-    let roll: i32;
-    {
-        let mut rng = ecs.write_resource::<RandomNumberGenerator>();
-        roll = rng.roll_dice(1, 2);
-    }
-    match roll {
-        1 => orc(ecs, x, y),
-        _ => goblin(ecs, x, y),
-    }
-}
-
 fn orc(ecs: &mut World, x: i32, y: i32) {
     monster(ecs, x, y, rltk::to_cp437('o'), "Orc");
 }
@@ -153,20 +140,6 @@ fn monster<S: ToString>(ecs: &mut World, x: i32, y: i32, glyph: u16, name: S) {
         })
         .marked::<SimpleMarker<SerializeMe>>()
         .build();
-}
-
-fn random_item(ecs: &mut World, x: i32, y: i32) {
-    let roll: i32;
-    {
-        let mut rng = ecs.write_resource::<RandomNumberGenerator>();
-        roll = rng.roll_dice(1, 4);
-    }
-    match roll {
-        1 => health_potion(ecs, x, y),
-        2 => fireball_scroll(ecs, x, y),
-        3 => confusion_scroll(ecs, x, y),
-        _ => magic_missile_scroll(ecs, x, y),
-    }
 }
 
 fn health_potion(ecs: &mut World, x: i32, y: i32) {

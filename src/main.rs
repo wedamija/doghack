@@ -131,7 +131,7 @@ impl State {
         {
             let mut worldmap_resource = self.ecs.write_resource::<Map>();
             let current_depth = worldmap_resource.depth;
-            *worldmap_resource = Map::new_rooms_and_corridors(current_depth + 1);
+            *worldmap_resource = Map::new_map_rooms_and_corridors(current_depth + 1);
             worldmap = worldmap_resource.clone();
         }
 
@@ -185,7 +185,7 @@ impl State {
         let worldmap;
         {
             let mut worldmap_resource = self.ecs.write_resource::<Map>();
-            *worldmap_resource = Map::new_rooms_and_corridors(1);
+            *worldmap_resource = Map::new_map_rooms_and_corridors(1);
             worldmap = worldmap_resource.clone();
         }
 
@@ -449,7 +449,7 @@ fn main() {
 
     gs.ecs.insert(SimpleMarkerAllocator::<SerializeMe>::new());
 
-    let map = Map::new_rooms_and_corridors(1);
+    let map = Map::new_map_rooms_and_corridors(1);
     gs.ecs.insert(rltk::RandomNumberGenerator::new());
 
     let (player_x, player_y) = map.rooms[0].center();

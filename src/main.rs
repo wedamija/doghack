@@ -22,6 +22,7 @@ mod monster_ai_system;
 use monster_ai_system::MonsterAI;
 mod player;
 pub use player::*;
+mod random_table;
 mod rect;
 pub use rect::Rect;
 mod saveload_system;
@@ -124,7 +125,7 @@ impl State {
 
         // Spawn bad guys
         for room in worldmap.rooms.iter().skip(1) {
-            spawner::spawn_room(&mut self.ecs, room);
+            spawner::spawn_room(&mut self.ecs, room, worldmap.depth);
         }
 
         // Place the player and update resources
@@ -366,7 +367,7 @@ fn main() {
 
     // Add monsters
     for room in map.rooms.iter().skip(1) {
-        spawner::spawn_room(&mut gs.ecs, room);
+        spawner::spawn_room(&mut gs.ecs, room, map.depth);
     }
     gs.ecs.insert(map);
     gs.ecs.insert(Point::new(player_x, player_y));

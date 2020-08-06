@@ -3,8 +3,8 @@ use specs::prelude::*;
 use std::cmp::{max, min};
 
 use super::{
-    CombatStats, GameLog, Item, Map, Player, Position, RunState, State, TileType, Viewshed,
-    WantsToMelee,
+    CombatStats, GameLog, Item, Map, Monster, Player, Position, RunState, State, TileType,
+    Viewshed, WantsToMelee,
 };
 use crate::WantsToPickupItem;
 
@@ -103,6 +103,37 @@ pub fn try_next_level(ecs: &mut World) -> bool {
     }
 }
 
+pub fn skip_turn(ecs: &mut World) -> RunState {
+    let player_entity = ecs.fetch::<Entity>();
+    let viewshed_components = ecs.read_storage::<Viewshed>();
+    let monsters = ecs.read_storage::<Monster>();
+
+    let worldmap_resource = ecs.fetch::<Map>();
+
+    let mut can_heal = true;
+    let viewshed = viewshed_components.get(*player_entity).unwrap();
+
+    for tile in viewshed.visible_tiles.iter() {
+        let idx = worldmap_resource.xy_idx(tile.x, tile.y);
+        for entity_id in worldmap_resource.tile_content[idx].iter() {
+            let mob = monsters.get(*entity_id);
+            match mob {
+                None => {}
+                Some(_) => {
+                    can_heal = false;
+                }
+            }
+        }
+    }
+
+    if can_heal {
+        let mut health_components = ecs.write_storage::<CombatStats>();
+        let player_hp = health_components.get_mut(*player_entity).unwrap();
+        player_hp.hp = i32::min(player_hp.hp + 1, player_hp.max_hp);
+    }
+    RunState::PlayerTurn
+}
+
 pub fn player_input(gs: &mut State, ctx: &mut Rltk) -> RunState {
     // Player movement
     match ctx.key {
@@ -121,6 +152,9 @@ pub fn player_input(gs: &mut State, ctx: &mut Rltk) -> RunState {
             VirtualKeyCode::Down | VirtualKeyCode::Numpad2 | VirtualKeyCode::J => {
                 try_move_player(0, 1, &mut gs.ecs)
             }
+
+            // Skip Turn
+            VirtualKeyCode::Numpad5 | VirtualKeyCode::Space => return skip_turn(&mut gs.ecs),
 
             // Diagonals
             VirtualKeyCode::Numpad9 | VirtualKeyCode::Y => try_move_player(1, -1, &mut gs.ecs),

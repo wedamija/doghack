@@ -1,4 +1,4 @@
-use super::{CombatStats, GameLog, Name, Player, SufferDamage};
+use super::{CombatStats, GameLog, Map, Name, Player, Position, SufferDamage};
 use crate::RunState;
 use rltk::console;
 use specs::prelude::*;
@@ -9,12 +9,20 @@ impl<'a> System<'a> for DamageSystem {
     type SystemData = (
         WriteStorage<'a, CombatStats>,
         WriteStorage<'a, SufferDamage>,
+        ReadStorage<'a, Position>,
+        WriteExpect<'a, Map>,
+        Entities<'a>,
     );
 
     fn run(&mut self, data: Self::SystemData) {
-        let (mut stats, mut damage) = data;
-        for (mut stats, damage) in (&mut stats, &damage).join() {
+        let (mut stats, mut damage, positions, mut map, entities) = data;
+        for (entity, mut stats, damage) in (&entities, &mut stats, &damage).join() {
             stats.hp -= damage.amount.iter().sum::<i32>();
+            let pos = positions.get(entity);
+            if let Some(pos) = pos {
+                let idx = map.xy_idx(pos.x, pos.y);
+                map.bloodstains.insert(idx);
+            }
         }
         damage.clear();
     }

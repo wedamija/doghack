@@ -223,6 +223,7 @@ impl<'a> System<'a> for ItemUseSystem {
                                     item_name.name, mob_name.name
                                 ));
                             }
+                            used_item = true;
                         }
                     }
                 }

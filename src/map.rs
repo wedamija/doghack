@@ -6,7 +6,7 @@ use std::cmp::{max, min};
 use std::collections::HashSet;
 
 pub const MAPWIDTH: usize = 80;
-pub const MAPHEIGHT: usize = 43;
+pub const MAPHEIGHT: usize = 42;
 pub const MAPCOUNT: usize = MAPHEIGHT * MAPWIDTH;
 
 #[derive(PartialEq, Copy, Clone, Serialize, Deserialize)]
@@ -155,8 +155,8 @@ impl Map {
         for _ in 0..MAX_ROOMS {
             let w = rng.range(MIN_SIZE, MAX_SIZE);
             let h = rng.range(MIN_SIZE, MAX_SIZE);
-            let x = rng.roll_dice(1, map.width - w - 1) - 1;
-            let y = rng.roll_dice(1, map.height - h - 1) - 1;
+            let x = i32::max(1, rng.roll_dice(1, map.width - w - 1) - 1);
+            let y = i32::max(1, rng.roll_dice(1, map.height - h - 1) - 1);
             let new_room = Rect::new(x, y, w, h);
             let mut ok = true;
             for other_room in map.rooms.iter() {
@@ -199,39 +199,49 @@ impl Map {
 }
 
 pub fn draw_map(ecs: &World, ctx: &mut Rltk) {
+    ctx.set_active_console(0);
+    ctx.cls();
+
     let map = ecs.fetch::<Map>();
 
     let mut y = 0;
     let mut x = 0;
     for (idx, tile) in map.tiles.iter().enumerate() {
         // Render a tile depending upon the tile type
+        let glyph;
+        let mut fg;
+        let mut bg = RGB::from_f32(0., 0., 0.);
         if map.revealed_tiles[idx] {
-            let glyph;
-            let mut fg;
-            let mut bg = RGB::from_f32(0., 0., 0.);
             match tile {
                 TileType::Floor => {
-                    glyph = rltk::to_cp437('.');
-                    fg = RGB::from_f32(0.0, 0.5, 0.5);
+                    // glyph = rltk::to_cp437('.');
+                    // fg = RGB::from_f32(0.0, 0.5, 0.5);
+                    fg = RGB::from_f32(1., 1., 1.);
+                    glyph = 128;
                 }
                 TileType::Wall => {
-                    glyph = wall_glyph(&*map, x, y);
-                    fg = RGB::from_f32(0., 1.0, 0.);
+                    // glyph = wall_glyph(&*map, x, y);
+                    // fg = RGB::from_f32(0., 1.0, 0.);
+                    glyph = tilemap_wall_glyph(&*map, x, y);
+                    fg = RGB::from_f32(1., 1., 1.);
                 }
                 TileType::DownStairs => {
-                    glyph = rltk::to_cp437('>');
-                    fg = RGB::from_f32(0., 1.0, 1.0);
+                    glyph = 177;
+                    fg = RGB::from_f32(1., 1.0, 1.0);
                 }
             }
             if map.bloodstains.contains(&idx) {
                 bg = RGB::from_f32(0.75, 0., 0.);
             }
             if !map.visible_tiles[idx] {
-                fg = fg.to_greyscale();
-                bg = RGB::from_f32(0., 0., 0.);
+                fg = fg * 0.3;
+                bg = RGB::from_f32(1., 1., 1.);
             }
-            ctx.set(x, y, fg, bg, glyph);
+        } else {
+            fg = RGB::from_f32(1., 1., 1.);
+            glyph = 32;
         }
+        ctx.set(x, y, fg, bg, glyph);
         x += 1;
         if x > MAPWIDTH as i32 - 1 {
             x = 0;
@@ -240,47 +250,97 @@ pub fn draw_map(ecs: &World, ctx: &mut Rltk) {
     }
 }
 
-fn is_revealed_and_wall(map: &Map, x: i32, y: i32) -> bool {
+fn is_wall(map: &Map, x: i32, y: i32) -> bool {
+    if x < 1 || x > map.width - 2 || y < 1 || y > map.height - 2 as i32 {
+        return true;
+    }
     let idx = map.xy_idx(x, y);
-    map.tiles[idx] == TileType::Wall && map.revealed_tiles[idx]
+    if idx > map.tiles.len() {
+        println!("idx too high")
+    }
+    map.tiles[idx] == TileType::Wall
 }
 
-fn wall_glyph(map: &Map, x: i32, y: i32) -> rltk::FontCharType {
+fn is_floor(map: &Map, x: i32, y: i32) -> bool {
     if x < 1 || x > map.width - 2 || y < 1 || y > map.height - 2 as i32 {
-        return 35;
+        return false;
     }
+
+    let idx = map.xy_idx(x, y);
+    map.tiles[idx] == TileType::Floor
+}
+
+fn tilemap_wall_glyph(map: &Map, x: i32, y: i32) -> rltk::FontCharType {
+    // if x < 1 || x > map.width - 2 || y < 1 || y > map.height - 2 as i32 {
+    //     return 35;
+    // }
     let mut mask: u8 = 0;
 
-    if is_revealed_and_wall(map, x, y - 1) {
+    if is_wall(map, x, y - 1) {
         mask += 1;
     }
-    if is_revealed_and_wall(map, x, y + 1) {
+    if is_wall(map, x, y + 1) {
         mask += 2;
     }
-    if is_revealed_and_wall(map, x - 1, y) {
+    if is_wall(map, x - 1, y) {
         mask += 4;
     }
-    if is_revealed_and_wall(map, x + 1, y) {
+    if is_wall(map, x + 1, y) {
         mask += 8;
     }
 
+    // if is_floor(map, x, y - 1) {
+    //     mask += 16;
+    // }
+    // if is_floor(map, x, y + 1) {
+    //     mask += 32;
+    // }
+    // if is_floor(map, x - 1, y) {
+    //     mask += 64;
+    // }
+    // if is_floor(map, x + 1, y) {
+    //     mask += 128;
+    // }
+
     match mask {
-        0 => 9,    // Pillar because we can't see neighbors
-        1 => 186,  // Wall only to the north
-        2 => 186,  // Wall only to the south
-        3 => 186,  // Wall to the north and south
-        4 => 205,  // Wall only to the west
-        5 => 188,  // Wall to the north and west
-        6 => 187,  // Wall to the south and west
-        7 => 185,  // Wall to the north, south and west
-        8 => 205,  // Wall only to the east
-        9 => 200,  // Wall to the north and east
-        10 => 201, // Wall to the south and east
-        11 => 204, // Wall to the north, south and east
-        12 => 205, // Wall to the east and west
-        13 => 202, // Wall to the east, west, and south
-        14 => 203, // Wall to the east, west, and north
-        15 => 206, // ╬ Wall on all sides
+        0 => 0,    // Pillar because we can't see neighbors
+        1 => 112,  // Wall only to the north
+        2 => 0,    // Wall only to the south
+        3 => 48,   // Wall to the north and south
+        4 => 114,  // Wall only to the west
+        5 => 115,  // Wall to the north and west
+        6 => 35,   // Wall to the south and west
+        7 => 51,   // Wall to the north, south and west
+        8 => 114,  // Wall only to the east
+        9 => 113,  // Wall to the north and east
+        10 => 33,  // Wall to the south and east
+        11 => 65,  // Wall to the north, south and east
+        12 => 114, // Wall to the east and west
+        13 => 114, // Wall to the east, west, and south
+        14 => 34,  // Wall to the east, west, and north
+        15 => {
+            let mut floor_mask: u8 = 0;
+            if is_floor(map, x + 1, y + 1) {
+                floor_mask += 1
+            } // NE
+            if is_floor(map, x + 1, y - 1) {
+                floor_mask += 2
+            } // SE
+            if is_floor(map, x - 1, y - 1) {
+                floor_mask += 4
+            } // SW
+            if is_floor(map, x - 1, y + 1) {
+                floor_mask += 8
+            } // NW
+            match floor_mask {
+                0 => 82,
+                1 => 90,
+                2 => 43,
+                4 => 45,
+                8 => 49,
+                _ => 82,
+            }
+        } // ╬ Wall on all sides
         _ => 35,   // We missed one?
     }
 }

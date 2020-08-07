@@ -225,7 +225,6 @@ impl GameState for State {
         }
 
         ctx.cls();
-
         match newrunstate {
             RunState::MainMenu { .. } => {}
             RunState::GameOver { .. } => {}
@@ -240,6 +239,8 @@ impl GameState for State {
                     let mut data = (&positions, &renderables).join().collect::<Vec<_>>();
                     data.sort_by(|&a, &b| b.1.render_order.cmp(&a.1.render_order));
 
+                    ctx.set_active_console(1);
+                    ctx.cls();
                     for (pos, render) in data.iter() {
                         let idx = map.xy_idx(pos.x, pos.y);
                         if map.visible_tiles[idx] {
@@ -410,10 +411,26 @@ impl GameState for State {
     }
 }
 
+rltk::embedded_resource!(TILE_FONT, "../resources/tiles_01_walls_floors.png");
+rltk::embedded_resource!(ITEM_FONT, "../resources/tiles_01_items.png");
+
 fn main() -> rltk::BError {
+    rltk::link_resource!(TILE_FONT, "resources/tiles_01_walls_floors.png");
+    rltk::link_resource!(ITEM_FONT, "resources/tiles_01_items.png");
     use rltk::RltkBuilder;
-    let mut context = RltkBuilder::simple80x50().with_title("doghack").build()?;
-    context.with_post_scanlines(true);
+    // let mut context = RltkBuilder::simple80x50().with_title("doghack").build()?;
+    let mut context = RltkBuilder::new()
+        .with_dimensions(80, 50)
+        .with_tile_dimensions(16, 16)
+        .with_title("doghack")
+        .with_font("terminal8x8.jpg", 8, 8)
+        .with_font("tiles_01_walls_floors.png", 16, 16)
+        .with_font("tiles_01_items.png", 16, 16)
+        .with_simple_console(80, 50, "tiles_01_walls_floors.png")
+        .with_sparse_console_no_bg(80, 50, "tiles_01_items.png")
+        .with_sparse_console_no_bg(80, 50, "terminal8x8.jpg")
+        .build()?;
+    // context.with_post_scanlines(true);
     let mut gs = State { ecs: World::new() };
     gs.ecs.register::<AreaOfEffect>();
     gs.ecs.register::<BlocksTile>();
@@ -463,7 +480,7 @@ fn main() -> rltk::BError {
         menu_selection: gui::MainMenuSelection::NewGame,
     });
     gs.ecs.insert(gamelog::GameLog {
-        entries: vec!["Welcome to Rusty Roguelike".to_string()],
+        entries: vec!["Welcome to doghack!".to_string()],
     });
 
     rltk::main_loop(context, gs)

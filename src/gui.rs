@@ -25,6 +25,8 @@ pub enum MainMenuResult {
 }
 
 pub fn draw_ui(ecs: &World, ctx: &mut Rltk) {
+    ctx.set_active_console(2);
+    ctx.cls();
     ctx.draw_box(
         0,
         43,
@@ -38,7 +40,7 @@ pub fn draw_ui(ecs: &World, ctx: &mut Rltk) {
     let depth = format!("Depth {}", map.depth);
     ctx.print_color(
         2,
-        43,
+        42,
         RGB::named(rltk::YELLOW),
         RGB::named(rltk::BLACK),
         &depth,
@@ -50,14 +52,14 @@ pub fn draw_ui(ecs: &World, ctx: &mut Rltk) {
         let health = format!(" HP: {} / {} ", stats.hp, stats.max_hp);
         ctx.print_color(
             12,
-            43,
+            42,
             RGB::named(rltk::YELLOW),
             RGB::named(rltk::BLACK),
             &health,
         );
         ctx.draw_bar_horizontal(
             28,
-            43,
+            42,
             51,
             stats.hp,
             stats.max_hp,
@@ -79,6 +81,7 @@ pub fn draw_ui(ecs: &World, ctx: &mut Rltk) {
 }
 
 fn draw_tooltips(ecs: &World, ctx: &mut Rltk) {
+    ctx.set_active_console(2);
     let map = ecs.fetch::<Map>();
     let names = ecs.read_storage::<Name>();
     let positions = ecs.read_storage::<Position>();
@@ -169,6 +172,7 @@ fn draw_tooltips(ecs: &World, ctx: &mut Rltk) {
     }
 }
 pub fn show_inventory(gs: &mut State, ctx: &mut Rltk) -> (ItemMenuResult, Option<Entity>) {
+    ctx.set_active_console(2);
     let player_entity = gs.ecs.fetch::<Entity>();
     let names = gs.ecs.read_storage::<Name>();
     let backpack = gs.ecs.read_storage::<InBackpack>();
@@ -255,6 +259,7 @@ pub fn show_inventory(gs: &mut State, ctx: &mut Rltk) -> (ItemMenuResult, Option
 }
 
 pub fn drop_item_menu(gs: &mut State, ctx: &mut Rltk) -> (ItemMenuResult, Option<Entity>) {
+    ctx.set_active_console(2);
     let player_entity = gs.ecs.fetch::<Entity>();
     let names = gs.ecs.read_storage::<Name>();
     let backpack = gs.ecs.read_storage::<InBackpack>();
@@ -346,17 +351,10 @@ pub fn ranged_target(
     ctx: &mut Rltk,
     range: i32,
 ) -> (ItemMenuResult, Option<Point>) {
+    ctx.set_active_console(2);
     let player_entity = gs.ecs.fetch::<Entity>();
     let player_pos = gs.ecs.fetch::<Point>();
     let viewsheds = gs.ecs.read_storage::<Viewshed>();
-
-    ctx.print_color(
-        5,
-        0,
-        RGB::named(rltk::YELLOW),
-        RGB::named(rltk::BLACK),
-        "Select Target:",
-    );
 
     // Highlight available target cells
     let mut available_cells = Vec::new();
@@ -366,13 +364,29 @@ pub fn ranged_target(
         for idx in visible.visible_tiles.iter() {
             let distance = rltk::DistanceAlg::Pythagoras.distance2d(*player_pos, *idx);
             if distance <= range as f32 {
-                ctx.set_bg(idx.x, idx.y, RGB::named(rltk::BLUE));
+                ctx.set(
+                    idx.x,
+                    idx.y,
+                    RGB::named(rltk::MIDNIGHT_BLUE),
+                    RGB::named(rltk::MIDNIGHT_BLUE),
+                    219,
+                );
+
+                ctx.set_all_fg_alpha(0.5);
                 available_cells.push(idx);
             }
         }
     } else {
         return (ItemMenuResult::Cancel, None);
     }
+
+    ctx.print_color(
+        5,
+        0,
+        RGB::named(rltk::YELLOW),
+        RGB::named(rltk::BLACK),
+        "Select Target:",
+    );
 
     // Draw mouse cursor
     let mouse_pos = ctx.mouse_pos();
@@ -383,7 +397,13 @@ pub fn ranged_target(
         }
     }
     if valid_target {
-        ctx.set_bg(mouse_pos.0, mouse_pos.1, RGB::named(rltk::CYAN));
+        ctx.set(
+            mouse_pos.0,
+            mouse_pos.1,
+            RGB::named(rltk::CYAN),
+            RGB::named(rltk::CYAN),
+            224,
+        );
         if ctx.left_click {
             return (
                 ItemMenuResult::Selected,
@@ -391,7 +411,13 @@ pub fn ranged_target(
             );
         }
     } else {
-        ctx.set_bg(mouse_pos.0, mouse_pos.1, RGB::named(rltk::RED));
+        ctx.set(
+            mouse_pos.0,
+            mouse_pos.1,
+            RGB::named(rltk::RED),
+            RGB::named(rltk::RED),
+            224,
+        );
         if ctx.left_click {
             return (ItemMenuResult::Cancel, None);
         }
@@ -401,6 +427,7 @@ pub fn ranged_target(
 }
 
 pub fn main_menu(gs: &mut State, ctx: &mut Rltk) -> MainMenuResult {
+    ctx.set_active_console(2);
     let save_exists = super::saveload_system::does_save_exist();
     let runstate = gs.ecs.fetch::<RunState>();
 
@@ -408,7 +435,7 @@ pub fn main_menu(gs: &mut State, ctx: &mut Rltk) -> MainMenuResult {
         15,
         RGB::named(rltk::YELLOW),
         RGB::named(rltk::BLACK),
-        "Rust Roguelike Tutorial",
+        "doghack",
     );
 
     if let RunState::MainMenu {
@@ -520,6 +547,7 @@ pub fn main_menu(gs: &mut State, ctx: &mut Rltk) -> MainMenuResult {
 }
 
 pub fn remove_item_menu(gs: &mut State, ctx: &mut Rltk) -> (ItemMenuResult, Option<Entity>) {
+    ctx.set_active_console(2);
     let player_entity = gs.ecs.fetch::<Entity>();
     let names = gs.ecs.read_storage::<Name>();
     let backpack = gs.ecs.read_storage::<Equipped>();
@@ -613,24 +641,19 @@ pub enum GameOverResult {
 }
 
 pub fn game_over(ctx: &mut Rltk) -> GameOverResult {
+    ctx.set_active_console(2);
     ctx.print_color_centered(
         15,
         RGB::named(rltk::YELLOW),
         RGB::named(rltk::BLACK),
         "Your dog has been fried!",
     );
-    ctx.print_color_centered(
-        17,
-        RGB::named(rltk::WHITE),
-        RGB::named(rltk::BLACK),
-        "One day, we'll tell you all about how you did.",
-    );
-    ctx.print_color_centered(
-        18,
-        RGB::named(rltk::WHITE),
-        RGB::named(rltk::BLACK),
-        "That day, sadly, is not in this chapter..",
-    );
+    // ctx.print_color_centered(
+    //     17,
+    //     RGB::named(rltk::WHITE),
+    //     RGB::named(rltk::BLACK),
+    //     "You have failed to retrieve your village's magical toaster",
+    // );
 
     ctx.print_color_centered(
         20,

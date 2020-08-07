@@ -20,8 +20,8 @@ pub fn player(ecs: &mut World, player_x: i32, player_y: i32) -> Entity {
             y: player_y,
         })
         .with(Renderable {
-            glyph: rltk::to_cp437('@'),
-            fg: RGB::named(rltk::YELLOW),
+            glyph: 3,
+            fg: RGB::named(rltk::WHITE),
             bg: RGB::named(rltk::BLACK),
             render_order: 0,
         })
@@ -46,14 +46,15 @@ pub fn player(ecs: &mut World, player_x: i32, player_y: i32) -> Entity {
 
 fn room_table(map_depth: i32) -> RandomTable {
     RandomTable::new()
-        .add("Goblin", 10)
-        .add("Orc", 1 + map_depth)
-        .add("Health Potion", 7)
+        .add("Broccoli", 10)
+        .add("Potato", 1 + map_depth)
+        .add("Ketchup", 7)
         .add("Fireball Scroll", 2 + (map_depth / 2))
-        .add("Confusion Scroll", 2 + (map_depth / 2))
-        .add("Magic Missile Scroll", 4)
-        .add("Dagger", 3)
-        .add("Longsword", map_depth - 1)
+        .add("Food Coma Scroll", 2 + (map_depth / 2))
+        .add("Meat Beam Scroll", 4)
+        .add("Spatula", 3)
+        .add("Fork", map_depth - 1)
+        .add("Bread Knife", map_depth - 2)
         .add("Shield", 3)
         .add("Tower Shield", map_depth - 1)
 }
@@ -90,14 +91,15 @@ pub fn spawn_room(ecs: &mut World, room: &Rect, map_depth: i32) {
         let y = (*spawn.0 / MAPWIDTH) as i32;
 
         match spawn.1.as_ref() {
-            "Goblin" => goblin(ecs, x, y),
-            "Orc" => orc(ecs, x, y),
-            "Health Potion" => health_potion(ecs, x, y),
+            "Potato" => potato(ecs, x, y),
+            "Broccoli" => broccoli(ecs, x, y),
+            "Ketchup" => ketchup(ecs, x, y),
             "Fireball Scroll" => fireball_scroll(ecs, x, y),
-            "Confusion Scroll" => confusion_scroll(ecs, x, y),
-            "Magic Missile Scroll" => magic_missile_scroll(ecs, x, y),
-            "Dagger" => dagger(ecs, x, y),
-            "Longsword" => longsword(ecs, x, y),
+            "Food Coma Scroll" => food_coma_scroll(ecs, x, y),
+            "Meat Beam Scroll" => meat_beam_scroll(ecs, x, y),
+            "Spatula" => spatula(ecs, x, y),
+            "Fork" => fork(ecs, x, y),
+            "Bread Knife" => bread_knife(ecs, x, y),
             "Shield" => shield(ecs, x, y),
             "Tower Shield" => tower_shield(ecs, x, y),
             _ => {}
@@ -105,12 +107,12 @@ pub fn spawn_room(ecs: &mut World, room: &Rect, map_depth: i32) {
     }
 }
 
-fn orc(ecs: &mut World, x: i32, y: i32) {
-    monster(ecs, x, y, rltk::to_cp437('o'), "Orc");
+fn broccoli(ecs: &mut World, x: i32, y: i32) {
+    monster(ecs, x, y, 4, "Broccoli");
 }
 
-fn goblin(ecs: &mut World, x: i32, y: i32) {
-    monster(ecs, x, y, rltk::to_cp437('g'), "Goblin");
+fn potato(ecs: &mut World, x: i32, y: i32) {
+    monster(ecs, x, y, 9, "Potato");
 }
 
 fn monster<S: ToString>(ecs: &mut World, x: i32, y: i32, glyph: u16, name: S) {
@@ -118,7 +120,7 @@ fn monster<S: ToString>(ecs: &mut World, x: i32, y: i32, glyph: u16, name: S) {
         .with(Position { x, y })
         .with(Renderable {
             glyph,
-            fg: RGB::named(rltk::RED),
+            fg: RGB::named(rltk::WHITE),
             bg: RGB::named(rltk::BLACK),
             render_order: 1,
         })
@@ -142,126 +144,85 @@ fn monster<S: ToString>(ecs: &mut World, x: i32, y: i32, glyph: u16, name: S) {
         .build();
 }
 
-fn health_potion(ecs: &mut World, x: i32, y: i32) {
-    ecs.create_entity()
+fn entity(ecs: &mut World, x: i32, y: i32, name: String, glyph: u16) -> EntityBuilder {
+    return ecs
+        .create_entity()
         .with(Position { x, y })
         .with(Renderable {
-            glyph: rltk::to_cp437('¡'),
-            fg: RGB::named(rltk::MAGENTA),
+            glyph: glyph,
+            fg: RGB::named(rltk::WHITE),
             bg: RGB::named(rltk::BLACK),
             render_order: 2,
         })
-        .with(Name {
-            name: "Health Potion".to_string(),
-        })
+        .with(Name { name: name })
+        .marked::<SimpleMarker<SerializeMe>>();
+}
+
+fn item(ecs: &mut World, x: i32, y: i32, name: String, glyph: u16) -> EntityBuilder {
+    return entity(ecs, x, y, name, glyph)
         .with(Item {})
+        .marked::<SimpleMarker<SerializeMe>>();
+}
+
+fn ketchup(ecs: &mut World, x: i32, y: i32) {
+    item(ecs, x, y, "Ketchup".to_string(), 5)
         .with(Consumable {})
         .with(ProvidesHealing { heal_amount: 8 })
-        .marked::<SimpleMarker<SerializeMe>>()
         .build();
 }
 
-fn magic_missile_scroll(ecs: &mut World, x: i32, y: i32) {
-    ecs.create_entity()
-        .with(Position { x, y })
-        .with(Renderable {
-            glyph: rltk::to_cp437(')'),
-            fg: RGB::named(rltk::CYAN),
-            bg: RGB::named(rltk::BLACK),
-            render_order: 2,
-        })
-        .with(Name {
-            name: "Magic Missile Scroll".to_string(),
-        })
-        .with(Item {})
-        .with(Consumable {})
+fn scroll(ecs: &mut World, x: i32, y: i32, name: String, glyph: u16) -> EntityBuilder {
+    return item(ecs, x, y, name, glyph).with(Consumable {});
+}
+
+fn meat_beam_scroll(ecs: &mut World, x: i32, y: i32) {
+    scroll(ecs, x, y, "Meat Beam Scroll".to_string(), 7)
         .with(Ranged { range: 6 })
         .with(InflictsDamage { damage: 8 })
-        .marked::<SimpleMarker<SerializeMe>>()
         .build();
 }
 
 fn fireball_scroll(ecs: &mut World, x: i32, y: i32) {
-    ecs.create_entity()
-        .with(Position { x, y })
-        .with(Renderable {
-            glyph: rltk::to_cp437(')'),
-            fg: RGB::named(rltk::ORANGE),
-            bg: RGB::named(rltk::BLACK),
-            render_order: 2,
-        })
-        .with(Name {
-            name: "Fireball Scroll".to_string(),
-        })
-        .with(Item {})
-        .with(Consumable {})
+    scroll(ecs, x, y, "Fireball Scroll".to_string(), 6)
         .with(Ranged { range: 6 })
         .with(InflictsDamage { damage: 20 })
         .with(AreaOfEffect { radius: 3 })
-        .marked::<SimpleMarker<SerializeMe>>()
         .build();
 }
 
-fn confusion_scroll(ecs: &mut World, x: i32, y: i32) {
-    ecs.create_entity()
-        .with(Position { x, y })
-        .with(Renderable {
-            glyph: rltk::to_cp437(')'),
-            fg: RGB::named(rltk::PINK),
-            bg: RGB::named(rltk::BLACK),
-            render_order: 2,
-        })
-        .with(Name {
-            name: "Confusion Scroll".to_string(),
-        })
-        .with(Item {})
-        .with(Consumable {})
+fn food_coma_scroll(ecs: &mut World, x: i32, y: i32) {
+    scroll(ecs, x, y, "Food Coma Scroll".to_string(), 8)
         .with(Ranged { range: 6 })
         .with(Confusion { turns: 4 })
-        .marked::<SimpleMarker<SerializeMe>>()
         .build();
 }
 
-fn dagger(ecs: &mut World, x: i32, y: i32) {
-    ecs.create_entity()
-        .with(Position { x, y })
-        .with(Renderable {
-            glyph: rltk::to_cp437('/'),
-            fg: RGB::named(rltk::CYAN),
-            bg: RGB::named(rltk::BLACK),
-            render_order: 2,
-        })
-        .with(Name {
-            name: "Dagger".to_string(),
-        })
-        .with(Item {})
+fn melee_weapon(
+    ecs: &mut World,
+    x: i32,
+    y: i32,
+    name: String,
+    glyph: u16,
+    power: i32,
+) -> EntityBuilder {
+    item(ecs, x, y, name, glyph)
         .with(Equippable {
             slot: EquipmentSlot::Melee,
         })
-        .with(MeleePowerBonus { power: 2 })
+        .with(MeleePowerBonus { power: power })
         .marked::<SimpleMarker<SerializeMe>>()
-        .build();
 }
 
-fn longsword(ecs: &mut World, x: i32, y: i32) {
-    ecs.create_entity()
-        .with(Position { x, y })
-        .with(Renderable {
-            glyph: rltk::to_cp437('/'),
-            fg: RGB::named(rltk::YELLOW),
-            bg: RGB::named(rltk::BLACK),
-            render_order: 2,
-        })
-        .with(Name {
-            name: "Longsword".to_string(),
-        })
-        .with(Item {})
-        .with(Equippable {
-            slot: EquipmentSlot::Melee,
-        })
-        .with(MeleePowerBonus { power: 4 })
-        .marked::<SimpleMarker<SerializeMe>>()
-        .build();
+fn spatula(ecs: &mut World, x: i32, y: i32) {
+    melee_weapon(ecs, x, y, "Spatula".to_string(), 1, 1).build();
+}
+
+fn fork(ecs: &mut World, x: i32, y: i32) {
+    melee_weapon(ecs, x, y, "Fork".to_string(), 2, 2).build();
+}
+
+fn bread_knife(ecs: &mut World, x: i32, y: i32) {
+    melee_weapon(ecs, x, y, "Bread Knife".to_string(), 0, 4).build();
 }
 
 fn shield(ecs: &mut World, x: i32, y: i32) {

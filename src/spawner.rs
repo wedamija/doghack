@@ -108,14 +108,23 @@ pub fn spawn_room(ecs: &mut World, room: &Rect, map_depth: i32) {
 }
 
 fn broccoli(ecs: &mut World, x: i32, y: i32) {
-    monster(ecs, x, y, 4, "Broccoli");
+    monster(ecs, x, y, 4, "Broccoli", 16, 1, 4);
 }
 
 fn potato(ecs: &mut World, x: i32, y: i32) {
-    monster(ecs, x, y, 9, "Potato");
+    monster(ecs, x, y, 9, "Potato", 25, 2, 6);
 }
 
-fn monster<S: ToString>(ecs: &mut World, x: i32, y: i32, glyph: u16, name: S) {
+fn monster<S: ToString>(
+    ecs: &mut World,
+    x: i32,
+    y: i32,
+    glyph: u16,
+    name: S,
+    max_hp: i32,
+    defense: i32,
+    power: i32,
+) {
     ecs.create_entity()
         .with(Position { x, y })
         .with(Renderable {
@@ -135,10 +144,10 @@ fn monster<S: ToString>(ecs: &mut World, x: i32, y: i32, glyph: u16, name: S) {
         })
         .with(BlocksTile {})
         .with(CombatStats {
-            max_hp: 16,
-            hp: 16,
-            defense: 1,
-            power: 4,
+            max_hp: max_hp,
+            hp: max_hp,
+            defense: defense,
+            power: power,
         })
         .marked::<SimpleMarker<SerializeMe>>()
         .build();
@@ -159,9 +168,7 @@ fn entity(ecs: &mut World, x: i32, y: i32, name: String, glyph: u16) -> EntityBu
 }
 
 fn item(ecs: &mut World, x: i32, y: i32, name: String, glyph: u16) -> EntityBuilder {
-    return entity(ecs, x, y, name, glyph)
-        .with(Item {})
-        .marked::<SimpleMarker<SerializeMe>>();
+    return entity(ecs, x, y, name, glyph).with(Item {});
 }
 
 fn ketchup(ecs: &mut World, x: i32, y: i32) {
@@ -210,7 +217,6 @@ fn melee_weapon(
             slot: EquipmentSlot::Melee,
         })
         .with(MeleePowerBonus { power: power })
-        .marked::<SimpleMarker<SerializeMe>>()
 }
 
 fn spatula(ecs: &mut World, x: i32, y: i32) {
@@ -225,44 +231,25 @@ fn bread_knife(ecs: &mut World, x: i32, y: i32) {
     melee_weapon(ecs, x, y, "Bread Knife".to_string(), 0, 4).build();
 }
 
-fn shield(ecs: &mut World, x: i32, y: i32) {
-    ecs.create_entity()
-        .with(Position { x, y })
-        .with(Renderable {
-            glyph: rltk::to_cp437('('),
-            fg: RGB::named(rltk::CYAN),
-            bg: RGB::named(rltk::BLACK),
-            render_order: 2,
-        })
-        .with(Name {
-            name: "Shield".to_string(),
-        })
-        .with(Item {})
+fn base_shield(
+    ecs: &mut World,
+    x: i32,
+    y: i32,
+    name: String,
+    glyph: u16,
+    defense: i32,
+) -> EntityBuilder {
+    item(ecs, x, y, name, glyph)
         .with(Equippable {
             slot: EquipmentSlot::Shield,
         })
-        .with(DefenseBonus { defense: 1 })
-        .marked::<SimpleMarker<SerializeMe>>()
-        .build();
+        .with(DefenseBonus { defense: defense })
+}
+
+fn shield(ecs: &mut World, x: i32, y: i32) {
+    base_shield(ecs, x, y, "Bread Shield".to_string(), 10, 1).build();
 }
 
 fn tower_shield(ecs: &mut World, x: i32, y: i32) {
-    ecs.create_entity()
-        .with(Position { x, y })
-        .with(Renderable {
-            glyph: rltk::to_cp437('('),
-            fg: RGB::named(rltk::YELLOW),
-            bg: RGB::named(rltk::BLACK),
-            render_order: 2,
-        })
-        .with(Name {
-            name: "Tower Shield".to_string(),
-        })
-        .with(Item {})
-        .with(Equippable {
-            slot: EquipmentSlot::Shield,
-        })
-        .with(DefenseBonus { defense: 3 })
-        .marked::<SimpleMarker<SerializeMe>>()
-        .build();
+    base_shield(ecs, x, y, "Dwarven Bread Shield".to_string(), 11, 3).build();
 }

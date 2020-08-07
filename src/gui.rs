@@ -431,13 +431,32 @@ pub fn main_menu(gs: &mut State, ctx: &mut Rltk) -> MainMenuResult {
     let save_exists = super::saveload_system::does_save_exist();
     let runstate = gs.ecs.fetch::<RunState>();
 
+    ctx.draw_box_double(
+        22,
+        18,
+        34,
+        10,
+        RGB::named(rltk::WHEAT),
+        RGB::named(rltk::BLACK),
+    );
     ctx.print_color_centered(
-        15,
+        20,
         RGB::named(rltk::YELLOW),
         RGB::named(rltk::BLACK),
         "doghack",
     );
-
+    ctx.print_color_centered(
+        21,
+        RGB::named(rltk::CYAN),
+        RGB::named(rltk::BLACK),
+        "Save the holy hotdog toaster",
+    );
+    ctx.print_color_centered(
+        22,
+        RGB::named(rltk::GRAY),
+        RGB::named(rltk::BLACK),
+        "btw ur a hotdog",
+    );
     if let RunState::MainMenu {
         menu_selection: selection,
     } = *runstate
@@ -646,14 +665,14 @@ pub fn game_over(ctx: &mut Rltk) -> GameOverResult {
         15,
         RGB::named(rltk::YELLOW),
         RGB::named(rltk::BLACK),
-        "Your dog has been fried!",
+        "You're out of ketchup!",
     );
-    // ctx.print_color_centered(
-    //     17,
-    //     RGB::named(rltk::WHITE),
-    //     RGB::named(rltk::BLACK),
-    //     "You have failed to retrieve your village's magical toaster",
-    // );
+    ctx.print_color_centered(
+        17,
+        RGB::named(rltk::WHITE),
+        RGB::named(rltk::BLACK),
+        "Another brave dog will have to save the holy toaster",
+    );
 
     ctx.print_color_centered(
         20,
